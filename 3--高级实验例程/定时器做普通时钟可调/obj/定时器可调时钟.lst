@@ -1,0 +1,258 @@
+C51 COMPILER V9.01   ¶¨Ê±Æ÷¿Éµ÷Ê±_Ó                                                        11/12/2018 09:48:51 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE ¶¨Ê±Æ÷¿Éµ÷Ê±_Ó
+OBJECT MODULE PLACED IN .\obj\¶¨Ê±Æ÷¿Éµ÷Ê±ÖÓ.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ¶¨Ê±Æ÷¿Éµ÷Ê±ÖÓ.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\obj
+                    -\¶¨Ê±Æ÷¿Éµ÷Ê±ÖÓ.lst) TABS(2) OBJECT(.\obj\¶¨Ê±Æ÷¿Éµ÷Ê±ÖÓ.obj)
+
+line level    source
+
+   1          /*-----------------------------------------------
+   2               ÊµÑéÃû³Æ£º»ùÓÚ¶¨Ê±Æ÷T0µÄ¿Éµ÷Ê±ÖÓ¡¢
+   3               ½ÓÏßËµÃ÷£º
+   4                   LSA=>P2^2;
+   5                   LSB=>P2^3;
+   6                   LSC=>P2^4;
+   7                   P0=>ÊıÂë¹ÜÎ»Ñ¡
+   8                   P3=>¶ÀÁ¢°´¼ü
+   9          ------------------------------------------------*/
+  10          #include<reg52.h> //°üº¬Í·ÎÄ¼ş£¬Ò»°ãÇé¿ö²»ĞèÒª¸Ä¶¯£¬Í·ÎÄ¼ş°üº¬ÌØÊâ¹¦ÄÜ¼Ä´æÆ÷µÄ¶¨Òå
+  11          
+  12          #define KeyPort P3 //¶¨Òå°´¼ü¶Ë¿Ú
+  13          #define u8 unsigned char
+  14          #define u16 unsigned int
+  15          //#define DataPort P0 //¶¨ÒåÊı¾İ¶Ë¿Ú ³ÌĞòÖĞÓöµ½DataPort ÔòÓÃP0 Ìæ»»
+  16          
+  17          //sbit LATCH1=P2^2;//¶¨ÒåËø´æÊ¹ÄÜ¶Ë¿Ú ¶ÎËø´æ
+  18          //sbit LATCH2=P2^3;//                 Î»Ëø´æ
+  19          sbit LSA=P2^2;
+  20          sbit LSB=P2^3;
+  21          sbit LSC=P2^4;
+  22          
+  23          unsigned char hour,minute,second;//¶¨ÒåÊ±·ÖÃë
+  24          
+  25          bit UpdateTimeFlag;//¶¨Òå¶ÁÊ±¼ä±êÖ¾
+  26          
+  27          unsigned char code dofly_DuanMa[10]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f};// ÏÔÊ¾¶ÎÂëÖµ0~9
+  28          unsigned char code dofly_WeiMa[]={0xfe,0xfd,0xfb,0xf7,0xef,0xdf,0xbf,0x7f};//·Ö±ğ¶ÔÓ¦ÏàÓ¦µÄÊıÂë¹ÜµãÁÁ,¼´Î»
+             -Âë
+  29          
+  30          u8 code smgduan[17]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
+  31                    0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};//ÏÔÊ¾0~FµÄÖµ
+  32          
+  33          unsigned char TempData[8],Key_Num; //´æ´¢ÏÔÊ¾ÖµµÄÈ«¾Ö±äÁ¿
+  34          
+  35          void DelayUs2x(unsigned char t);//us¼¶ÑÓÊ±º¯ÊıÉùÃ÷ 
+  36          void DelayMs(unsigned char t); //ms¼¶ÑÓÊ±
+  37          void DigDisplay();//ÊıÂë¹ÜÏÔÊ¾º¯Êı
+  38          unsigned char KeyScan(void);//¼üÅÌÉ¨Ãè
+  39          void     Init_Timer0(void);//¶¨Ê±Æ÷³õÊ¼»¯
+  40          /*------------------------------------------------
+  41                              Ö÷º¯Êı
+  42          ------------------------------------------------*/
+  43          void delay(u16 i)
+  44          {
+  45   1        while(i--); 
+  46   1      }   
+  47          /*--------------------------------------------------*/
+  48          void main (void)
+  49          {
+  50   1      //unsigned char num;                  
+  51   1      
+  52   1      Init_Timer0();
+  53   1      
+C51 COMPILER V9.01   ¶¨Ê±Æ÷¿Éµ÷Ê±_Ó                                                        11/12/2018 09:48:51 PAGE 2   
+
+  54   1      while (1)         //Ö÷Ñ­»·
+  55   1        {
+  56   2          
+  57   2                Key_Num=KeyScan();
+  58   2                switch(Key_Num)
+  59   2                  {
+  60   3                        case 1:hour++;if(hour==24)hour=0;     //Õı³£Ê±¼ä Ğ¡Ê± ¼Ó1
+  61   3                             break;
+  62   3                        case 2:hour--;if(hour==255)hour=23;   //Õı³£Ê±¼ä Ğ¡Ê±¼õ1
+  63   3                           break;
+  64   3                        case 3:minute++;if(minute==60)minute=0;     //·ÖÖÓ¼Ó1
+  65   3                           break;
+  66   3                        case 4:minute--;if(minute==255)minute=59;   //·ÖÖÓ¼õ1
+  67   3                           break;
+  68   3                        default:break;
+  69   3                  } 
+  70   2      //          if(UpdateTimeFlag==1)
+  71   2      //           {
+  72   2      //                UpdateTimeFlag=0;
+  73   2      
+  74   2                     TempData[0]=dofly_DuanMa[hour/10]; //Ê±      //Êı¾İµÄ×ª»»£¬ÒòÎÒÃÇ²ÉÓÃÊıÂë¹Ü0~9µÄÏÔÊ¾,½«Êı¾İ·Ö¿ª
+  75   2                     TempData[1]=dofly_DuanMa[hour%10];
+  76   2                     TempData[2]=0x40;                        //¼ÓÈë"-"
+  77   2                     TempData[3]=dofly_DuanMa[minute/10];//·Ö
+  78   2                     TempData[4]=dofly_DuanMa[minute%10];
+  79   2                     TempData[5]=0x40;
+  80   2                     TempData[6]=dofly_DuanMa[second/10];//Ãë
+  81   2                     TempData[7]=dofly_DuanMa[second%10]; 
+  82   2                     
+  83   2                    DigDisplay();
+  84   2      //            }
+  85   2                // DigDisplay();
+  86   2       }
+  87   1      }
+  88          /*------------------------------------------------
+  89           uSÑÓÊ±º¯Êı£¬º¬ÓĞÊäÈë²ÎÊı unsigned char t£¬ÎŞ·µ»ØÖµ
+  90           unsigned char   ÊÇ¶¨ÒåÎŞ·ûºÅ×Ö·û±äÁ¿£¬ÆäÖµµÄ·¶Î§ÊÇ
+  91           0~255 ÕâÀïÊ¹ÓÃ¾§Õñ12M£¬¾«È·ÑÓÊ±ÇëÊ¹ÓÃ»ã±à,´óÖÂÑÓÊ±
+  92           ³¤¶ÈÈçÏÂ T=tx2+5 uS 
+  93          ------------------------------------------------*/
+  94          void DelayUs2x(unsigned char t)
+  95          {   
+  96   1       while(--t);
+  97   1      }
+  98          /*------------------------------------------------
+  99           mSÑÓÊ±º¯Êı£¬º¬ÓĞÊäÈë²ÎÊı unsigned char t£¬ÎŞ·µ»ØÖµ
+ 100           unsigned char ÊÇ¶¨ÒåÎŞ·ûºÅ×Ö·û±äÁ¿£¬ÆäÖµµÄ·¶Î§ÊÇ
+ 101           0~255 ÕâÀïÊ¹ÓÃ¾§Õñ12M£¬¾«È·ÑÓÊ±ÇëÊ¹ÓÃ»ã±à
+ 102          ------------------------------------------------*/
+ 103          void DelayMs(unsigned char t)
+ 104          {
+ 105   1           
+ 106   1       while(t--)
+ 107   1       {
+ 108   2           //´óÖÂÑÓÊ±1mS
+ 109   2           DelayUs2x(245);
+ 110   2           DelayUs2x(245);
+ 111   2       }
+ 112   1      }
+ 113          /*------------------------------------------------
+ 114           ÏÔÊ¾º¯Êı£¬ÓÃÓÚ¶¯Ì¬É¨ÃèÊıÂë¹Ü
+ 115           ÊäÈë²ÎÊı FirstBit ±íÊ¾ĞèÒªÏÔÊ¾µÄµÚÒ»Î»£¬Èç¸³Öµ2±íÊ¾´ÓµÚÈı¸öÊıÂë¹Ü¿ªÊ¼ÏÔÊ¾
+C51 COMPILER V9.01   ¶¨Ê±Æ÷¿Éµ÷Ê±_Ó                                                        11/12/2018 09:48:51 PAGE 3   
+
+ 116           ÈçÊäÈë0±íÊ¾´ÓµÚÒ»¸öÏÔÊ¾¡£
+ 117           Num±íÊ¾ĞèÒªÏÔÊ¾µÄÎ»Êı£¬ÈçĞèÒªÏÔÊ¾99Á½Î»ÊıÖµÔò¸ÃÖµÊäÈë2
+ 118          ------------------------------------------------*/
+ 119          void DigDisplay()
+ 120          {
+ 121   1        u8 i=0;
+ 122   1        for(i=0;i<8;i++)
+ 123   1        {
+ 124   2          switch(i)  //Î»Ñ¡£¬Ñ¡ÔñµãÁÁµÄÊıÂë¹Ü£¬
+ 125   2          {
+ 126   3            case(0):
+ 127   3              LSA=0;LSB=0;LSC=0; break;//ÏÔÊ¾µÚ0Î»
+ 128   3            case(1):
+ 129   3              LSA=1;LSB=0;LSC=0; break;//ÏÔÊ¾µÚ1Î»
+ 130   3            case(2):
+ 131   3              LSA=0;LSB=1;LSC=0; break;//ÏÔÊ¾µÚ2Î»
+ 132   3            case(3):
+ 133   3              LSA=1;LSB=1;LSC=0; break;//ÏÔÊ¾µÚ3Î»
+ 134   3            case(4):
+ 135   3              LSA=0;LSB=0;LSC=1; break;//ÏÔÊ¾µÚ4Î»
+ 136   3            case(5):
+ 137   3              LSA=1;LSB=0;LSC=1; break;//ÏÔÊ¾µÚ5Î»
+ 138   3            case(6):
+ 139   3              LSA=0;LSB=1;LSC=1; break;//ÏÔÊ¾µÚ6Î»
+ 140   3            case(7):
+ 141   3              LSA=1;LSB=1;LSC=1; break;//ÏÔÊ¾µÚ7Î»  
+ 142   3          }
+ 143   2          P0=TempData[i];//·¢ËÍ¶ÎÂë
+ 144   2          delay(100); //¼ä¸ôÒ»¶ÎÊ±¼äÉ¨Ãè  
+ 145   2          P0=0x00;//ÏûÒş
+ 146   2        //delay(1000);
+ 147   2        }
+ 148   1      } 
+ 149          /*------------------------------------------------
+ 150                              ¶¨Ê±Æ÷³õÊ¼»¯×Ó³ÌĞò
+ 151          ------------------------------------------------*/
+ 152          void Init_Timer0(void)
+ 153          {
+ 154   1       TMOD |= 0x01;    //Ê¹ÓÃÄ£Ê½1£¬16Î»¶¨Ê±Æ÷£¬Ê¹ÓÃ"|"·ûºÅ¿ÉÒÔÔÚÊ¹ÓÃ¶à¸ö¶¨Ê±Æ÷Ê±²»ÊÜÓ°Ïì         
+ 155   1       //TH0=0x00;        //¸ø¶¨³õÖµ
+ 156   1       //TL0=0x00;
+ 157   1       EA=1;            //×ÜÖĞ¶Ï´ò¿ª
+ 158   1       ET0=1;           //¶¨Ê±Æ÷ÖĞ¶Ï´ò¿ª
+ 159   1       TR0=1;           //¶¨Ê±Æ÷¿ª¹Ø´ò¿ª
+ 160   1      }
+ 161          /*------------------------------------------------
+ 162                           ¶¨Ê±Æ÷ÖĞ¶Ï×Ó³ÌĞò
+ 163          ------------------------------------------------*/
+ 164          void Timer0_isr(void) interrupt 1 
+ 165          {
+ 166   1       static unsigned int num,i;
+ 167   1       TH0=(65536-2000)/256;//ÖØĞÂ¸³Öµ 2ms
+ 168   1       TL0=(65536-2000)%256;
+ 169   1       
+ 170   1       // DigDisplay();     // µ÷ÓÃÊıÂë¹ÜÉ¨Ãè
+ 171   1      i++;
+ 172   1       if(i==10)            //20ms¸üĞÂÒ»´Î
+ 173   1          {
+ 174   2        i=0;
+ 175   2        UpdateTimeFlag=1;   //¸üĞÂÊ±¼äÖ¾Î»ÖÃ1
+ 176   2        }
+ 177   1       num++;
+C51 COMPILER V9.01   ¶¨Ê±Æ÷¿Éµ÷Ê±_Ó                                                        11/12/2018 09:48:51 PAGE 4   
+
+ 178   1       if(num==500)        //´óÖÂ1s
+ 179   1         {
+ 180   2          num=0;
+ 181   2        second++;
+ 182   2        if(second==60)     //Ãëµ½60£¬·ÖÖÓ¼Ó1
+ 183   2         {
+ 184   3          second=0;   
+ 185   3          minute++;
+ 186   3          if(minute==60)  //·ÖÖÓµ½60£¬Ğ¡Ê±¼Ó1
+ 187   3            {
+ 188   4           minute=0;
+ 189   4           hour++;
+ 190   4           if(hour==24)   //Ğ¡Ê±µ½24£¬»ØÁã
+ 191   4             hour=0;
+ 192   4          }
+ 193   3         }
+ 194   2         
+ 195   2        }
+ 196   1      }
+ 197          
+ 198          /*------------------------------------------------
+ 199          °´¼üÉ¨Ãèº¯Êı£¬·µ»ØÉ¨Ãè¼üÖµ
+ 200          ----------------------------------------------*/
+ 201          unsigned char KeyScan(void)
+ 202          {
+ 203   1       unsigned char keyvalue;
+ 204   1       if(KeyPort!=0xff)
+ 205   1         {
+ 206   2          DelayMs(10);
+ 207   2          if(KeyPort!=0xff)
+ 208   2           {
+ 209   3            keyvalue=KeyPort;
+ 210   3            while(KeyPort!=0xff);
+ 211   3          switch(keyvalue)
+ 212   3          {
+ 213   4           case 0xfe:return 1;break;
+ 214   4           case 0xfd:return 2;break;
+ 215   4           case 0xfb:return 3;break;
+ 216   4           case 0xf7:return 4;break;
+ 217   4           case 0xef:return 5;break;
+ 218   4           case 0xdf:return 6;break;
+ 219   4           case 0xbf:return 7;break;
+ 220   4           case 0x7f:return 8;break;
+ 221   4           default:return   0;break;
+ 222   4          }
+ 223   3          }
+ 224   2         }
+ 225   1         return 0;
+ 226   1      }
+ 227          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    470    ----
+   CONSTANT SIZE    =     35    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     16    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

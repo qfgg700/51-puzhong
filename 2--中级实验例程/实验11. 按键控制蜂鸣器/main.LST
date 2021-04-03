@@ -1,0 +1,112 @@
+C51 COMPILER V9.01   MAIN                                                                  09/29/2019 16:54:46 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*
+   2          实验说明：
+   3                  此程序兼容了有源和无源蜂鸣器
+   4          实验接线：
+   5                  独立按键模块-->单片机管脚
+   6                  K1-->P31
+   7                  K2-->P30
+   8                  蜂鸣器模块-->单片机管脚
+   9                  BEEP-->P15
+  10          实验现象：
+  11                  按下K1键，蜂鸣器发出声音，按下K2键，蜂鸣器停止发声
+  12          */
+  13          
+  14          #include "reg52.h"                       //此文件中定义了单片机的一些特殊功能寄存器
+  15          
+  16          typedef unsigned int u16;         //对数据类型进行声明定义
+  17          typedef unsigned char u8;
+  18          
+  19          sbit k1=P3^1;
+  20          sbit k2=P3^0;
+  21          
+  22          sbit beep=P1^5;
+  23          
+  24          u8 start=0;
+  25          
+  26          /*******************************************************************************
+  27          * 函 数 名         : delay
+  28          * 函数功能                 : 延时函数，i=1时，大约延时10us
+  29          *******************************************************************************/
+  30          void delay(u16 i)
+  31          {
+  32   1              while(i--);     
+  33   1      }
+  34          
+  35          void sound()
+  36          {
+  37   1              u8 i=100;
+  38   1              while(i--)
+  39   1              {
+  40   2                      beep=~beep;
+  41   2                      delay(100);     
+  42   2              }
+  43   1      }
+  44          void keypros()
+  45          {
+  46   1              if(k1==0)                        //开始
+  47   1              {
+  48   2                      delay(1000);
+  49   2                      if(k1==0)
+  50   2                      {
+  51   3                              start=1;                
+  52   3                      }
+  53   2                      while(!k1);
+  54   2              }
+  55   1              if(k2==0)                         //停止
+C51 COMPILER V9.01   MAIN                                                                  09/29/2019 16:54:46 PAGE 2   
+
+  56   1              {
+  57   2                      delay(1000);
+  58   2                      if(k2==0)
+  59   2                      {
+  60   3                              start=0;                
+  61   3                      }
+  62   2                      while(!k2);
+  63   2              }
+  64   1      }
+  65          /*******************************************************************************
+  66          * 函 数 名       : main
+  67          * 函数功能               : 主函数
+  68          * 输    入       : 无
+  69          * 输    出       : 无
+  70          *******************************************************************************/
+  71          void main()
+  72          {       
+  73   1              while(1)
+  74   1              {
+  75   2                      keypros();
+  76   2                      if(start==1)
+  77   2                      {
+  78   3                              sound();
+  79   3                      }
+  80   2                      else
+  81   2                      {
+  82   3                              beep=1;
+  83   3                      }               
+  84   2              }               
+  85   1      }
+  86          
+  87          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     87    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
